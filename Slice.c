@@ -14,14 +14,16 @@ int mouseDown,mouseCoords[2],lastCoords[2],newVert[2],newOrder[2];
 int screenArray[500][500],sliceReady;
 float colorScreenArray[500][500][3];
 deque<std::deque<int> > vertices;
+deque<std::deque<float> > colors;
 deque<int> placeholder;
+deque<float> placeholder2;
 
 void display(void){
   glClear(GL_COLOR_BUFFER_BIT);
-  glEnable(GL_BLEND);
+  /*glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-  /*for(unsigned int i=0;i<vertices.size();i++){
+  for(unsigned int i=0;i<vertices.size();i++){
     glColor4f(i==0||i==3||i==5||i==6,i==1||i==3||i==4||i==6,i==2||i==4||i==5||i==6,0.5);
     glBegin(GL_POLYGON);
     for(unsigned int j=0;j<vertices[i].size();j+=2){
@@ -32,11 +34,9 @@ void display(void){
 
   for(int i=0;i<wsize;i++){
     for(int j=0;j<wsize;j++){
-      int k = (screenArray[j][i]-1) % 7;
-      float div = screenArray[j][i]/7 + 1;
-      colorScreenArray[i][j][0] = (k==0||k==3||k==5||k==6) / div;
-      colorScreenArray[i][j][1] = (k==1||k==3||k==4||k==6) / fmax(div-1,1);
-      colorScreenArray[i][j][2] = (k==2||k==4||k==5||k==6) / fmax(div-2,1);
+      //int k = (screenArray[j][i]-1) % 7;
+      //float div = screenArray[j][i]/7 + 1;
+      for(int k=0;k<3;k++) colorScreenArray[i][j][k] = colors[screenArray[j][i]][k];//(k==0||k==3||k==5||k==6) / div;
     }
   }
   glRasterPos2i(0,0);
@@ -100,6 +100,8 @@ void breakPoly(int x,int y,int currentPoly,double angle){
     for(unsigned int j=max(newOrder[0],newOrder[1]);j<vertices[i].size();j++){
       vertices[vertices.size()-1].push_back(vertices[i][j]);
     }
+    colors.push_back(placeholder2);
+    for(int j=0;j<3;j++) colors[colors.size()-1].push_back(rand()%1001/1000.0);
 
     // original shape
     for(unsigned int k=0;k<vertices[vertices.size()-1].size();k+=2){
@@ -132,7 +134,7 @@ void traceSlice(int x,int y){
   double i = min(mouseCoords[0],x);
   double j = (mouseCoords[0]<x ? mouseCoords[1] : y);
   double angle = ((double)y-mouseCoords[1]) / (x-mouseCoords[0]);
-  int currentNum = screenArray[(int)i][(int)j];
+  int currentNum = screenArray[max((int)i,0)][max((int)j,0)];
   double iInc,jInc;
 
   if(angle<=1.0 && angle>=-1.0) iInc=1.0,jInc=angle;
@@ -185,12 +187,19 @@ void mouseMove(int x,int y){
 void init(){
   sliceReady = 1;
   newVert[0] = newVert[1] = -1;
+
+  colors.clear();
+  for(int i=0;i<2;i++) colors.push_back(placeholder2);
+  for(int i=0;i<3;i++) colors[0].push_back(0.0);
+  for(int i=0;i<3;i++) colors[1].push_back(rand()%1001/1000.0);
+
   vertices.clear();
   vertices.push_back(placeholder);
   for(int i=0;i<4;i++){
     vertices[0].push_back(i==1||i==2 ? 3*wsize/4 : wsize/4);
     vertices[0].push_back(i/2 ? 3*wsize/4 : wsize/4);
   }
+
   for(int i=0;i<wsize;i++){
     for(int j=0;j<wsize;j++){
       if(i>wsize/4 && i<3*wsize/4 && j>wsize/4 && j<3*wsize/4){
@@ -219,6 +228,8 @@ void keyboard(unsigned char key,int x,int y){
 }
 
 int main(int argc,char** argv){
+  srand(time(NULL));
+
   glutInit(&argc,argv);
   glutInitWindowSize(wsize,wsize);
   glutInitWindowPosition((1280-wsize)/2-150,(800-wsize)/2);
