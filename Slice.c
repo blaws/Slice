@@ -12,24 +12,37 @@ using namespace std;
 int wsize=500;
 int mouseDown,mouseCoords[2],lastCoords[2],newVert[2],newOrder[2];
 int screenArray[500][500],sliceReady;
+float colorScreenArray[500][500][3];
 deque<std::deque<int> > vertices;
 deque<int> placeholder;
 
 void display(void){
   glClear(GL_COLOR_BUFFER_BIT);
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-  for(unsigned int i=0;i<vertices.size();i++){
-    glColor4f(i==0||i==3||i==5||i==6,i==1||i==3||i==4||i==6,i==2||i==4||i==5||i==6,.5);
+  /*for(unsigned int i=0;i<vertices.size();i++){
+    glColor4f(i==0||i==3||i==5||i==6,i==1||i==3||i==4||i==6,i==2||i==4||i==5||i==6,0.5);
     glBegin(GL_POLYGON);
     for(unsigned int j=0;j<vertices[i].size();j+=2){
       glVertex2i(vertices[i][j],vertices[i][j+1]);
     }
     glEnd();
-  }
+    }*/
 
-  if(mouseDown && sliceReady){
+  for(int i=0;i<wsize;i++){
+    for(int j=0;j<wsize;j++){
+      int k = (screenArray[j][i]-1) % 7;
+      float div = screenArray[j][i]/7 + 1;
+      colorScreenArray[i][j][0] = (k==0||k==3||k==5||k==6) / div;
+      colorScreenArray[i][j][1] = (k==1||k==3||k==4||k==6) / fmax(div-1,1);
+      colorScreenArray[i][j][2] = (k==2||k==4||k==5||k==6) / fmax(div-2,1);
+    }
+  }
+  glRasterPos2i(0,0);
+  glDrawPixels(wsize,wsize,GL_RGB,GL_FLOAT,colorScreenArray);
+
+  if(mouseDown){
     glColor3f(1.0,1.0,1.0);
     glBegin(GL_LINES);
     glVertex2iv(mouseCoords);
@@ -128,16 +141,11 @@ void traceSlice(int x,int y){
   for(;i<max(x,mouseCoords[0]);i+=iInc,j+=jInc){
     if(i>=0 && i<wsize && j>=0 && j<wsize){
       if(screenArray[(int)i][(int)j] != currentNum){
-	if(newVert[0]<0 && newVert[1]<0){
-	  newVert[0] = (int)i;
-	  newVert[1] = (int)j;
-	}
-	else{
+	if(newVert[0]!=-1 && newVert[1]!=-1){
 	  breakPoly((int)i,(int)j,currentNum,angle);
-	  sliceReady = 0;
-	  newVert[0] = (int)i;
-	  newVert[1] = (int)j;
 	}
+	newVert[0] = (int)i;
+	newVert[1] = (int)j;
 	currentNum = screenArray[(int)i][(int)j];
       }
     }
