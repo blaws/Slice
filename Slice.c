@@ -10,8 +10,8 @@
 using namespace std;
 
 int wsize=500;
-int mouseDown,mouseCoords[2],lastCoords[2],newVert[2],newOrder[2];
-int screenArray[500][500],sliceReady;
+int mouseDown,mouseCoords[2],lastCoords[2],newVert[2],newOrder[2],doVertices=0;
+int screenArray[500][500];
 float colorScreenArray[500][500][3];
 deque<std::deque<int> > vertices;
 deque<std::deque<float> > colors;
@@ -21,26 +21,27 @@ deque<float> placeholder2;
 void display(void){
   glClear(GL_COLOR_BUFFER_BIT);
   /*glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-  for(unsigned int i=0;i<vertices.size();i++){
-    glColor4f(i==0||i==3||i==5||i==6,i==1||i==3||i==4||i==6,i==2||i==4||i==5||i==6,0.5);
-    glBegin(GL_POLYGON);
-    for(unsigned int j=0;j<vertices[i].size();j+=2){
-      glVertex2i(vertices[i][j],vertices[i][j+1]);
-    }
-    glEnd();
-    }*/
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);*/
 
   for(int i=0;i<wsize;i++){
     for(int j=0;j<wsize;j++){
-      //int k = (screenArray[j][i]-1) % 7;
-      //float div = screenArray[j][i]/7 + 1;
-      for(int k=0;k<3;k++) colorScreenArray[i][j][k] = colors[screenArray[j][i]][k];//(k==0||k==3||k==5||k==6) / div;
+      for(int k=0;k<3;k++) colorScreenArray[i][j][k] = colors[screenArray[j][i]][k];
     }
   }
   glRasterPos2i(0,0);
   glDrawPixels(wsize,wsize,GL_RGB,GL_FLOAT,colorScreenArray);
+
+  if(doVertices){
+    glPointSize(3.0);
+    for(unsigned int i=0;i<vertices.size();i++){
+      glColor3f(1.0,1.0,1.0);//i==0||i==3||i==5||i==6,i==1||i==3||i==4||i==6,i==2||i==4||i==5||i==6,0.5);
+      glBegin(GL_POINTS);
+      for(unsigned int j=0;j<vertices[i].size();j+=2){
+	glVertex2i(vertices[i][j],vertices[i][j+1]);
+      }
+      glEnd();
+    }
+  }
 
   if(mouseDown){
     glColor3f(1.0,1.0,1.0);
@@ -168,7 +169,7 @@ void mouse(int button,int state,int x,int y){
       mouseDown = 0;
       if(x==mouseCoords[0]) mouseCoords[0]--;
       if(y==mouseCoords[1]) mouseCoords[1]--;
-      if(sliceReady) traceSlice(x,y);
+      traceSlice(x,y);
       //cout<<"poly "<<screenArray[x][y]<<endl;
       glutPostRedisplay();
     }
@@ -185,7 +186,6 @@ void mouseMove(int x,int y){
 }
 
 void init(){
-  sliceReady = 1;
   newVert[0] = newVert[1] = -1;
 
   colors.clear();
@@ -220,6 +220,10 @@ void keyboard(unsigned char key,int x,int y){
   case 'r':
   case 'R':
     init();
+    break;
+  case 'v':
+  case 'V':
+    doVertices = !doVertices;
     break;
   default:
     break;
